@@ -43,11 +43,13 @@ class RasterPlot(ColorbarPlot):
             img = img.astype(np.int8)
 
         if type(element) is Raster:
-            l, b, r, t = element.extents
+            xvals = element.dimension_values(0, expanded=False)
+            yvals = element.dimension_values(1, expanded=False)
+            l, r = 0, len(xvals)
+            b, t = 0, len(yvals)
             if self.invert_axes:
-                l, b, r, t = b, l, t, r
-            else:
                 img = img.T
+                l, b, r, t = b, l, t, r
         else:
             l, b, r, t = element.bounds.lbrt()
             if self.invert_axes:
