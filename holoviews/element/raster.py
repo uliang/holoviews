@@ -70,6 +70,22 @@ class Raster(Dataset, Element2D):
             self.extents = extents
 
 
+    def select(self, selection_specs=None, **selection):
+        """
+        Allows selecting data by the slices, sets and scalar values
+        along a particular dimension. The indices should be supplied as
+        keywords mapping between the selected dimension and
+        value. Additionally selection_specs (taking the form of a list
+        of type.group.label strings, types or functions) may be
+        supplied, which will ensure the selection is only applied if the
+        specs match the selected object.
+        """
+        selected = super(Raster, self).select(selection_specs=None, **selection)
+        if np.isscalar(selected):
+            return selected
+        return selected.clone(extents=type(self).extents)
+
+
     def __setstate__(self, state):
         """
         Ensures old-style unpickled Image types without an interface
