@@ -16,6 +16,7 @@ import pyparsing as pp
 
 from ..core.options import Options, Cycle, Palette
 from ..operation import Compositor
+from .ops import op, norm
 
 ascii_uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 allowed = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&\()*+,-./:;<=>?@\\^_`{|}~'
@@ -34,7 +35,8 @@ class Parser(object):
     """
 
     # Static namespace set in __init__.py of the extension
-    namespace = {'np': np, 'Cycle': Cycle, 'Palette': Palette}
+    namespace = {'np': np, 'Cycle': Cycle, 'Palette': Palette, 'op': op,
+                 'norm': norm}
     # If True, raise SyntaxError on eval error otherwise warn
     abort_on_eval_failure = False
 
