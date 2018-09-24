@@ -42,7 +42,7 @@ from ...core.util import (basestring, unique_array, callable_name, pd,
                           dt64_to_dt, _getargspec)
 from ...core.spaces import get_nested_dmaps, DynamicMap
 
-from ..util import dim_axis_label, rgb2hex, COLOR_ALIASES
+from ..util import dim_axis_label, rgb2hex, COLOR_ALIASES, RGB_HEX_REGEX
 
 # Conversion between matplotlib and bokeh markers
 markers = {'s': {'marker': 'square'},
@@ -56,8 +56,6 @@ markers = {'s': {'marker': 'square'},
            '2': {'marker': 'triangle', 'angle': -np.pi/2},
            '3': {'marker': 'triangle', 'angle': np.pi},
            '4': {'marker': 'triangle', 'angle': np.pi/2}}
-
-RGB_HEX_REGEX = re.compile(r'^#(?:[0-9a-fA-F]{3}){1,2}$')
 
 
 def convert_timestamp(timestamp):
@@ -80,7 +78,7 @@ def rgba_tuple(rgba):
 
 def is_color(color):
     """
-    Checks if a color
+    Checks if the supplied value is a valid color spec.
     """
     if not isinstance(color, basestring):
         return False
