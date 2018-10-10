@@ -825,14 +825,14 @@ class ElementPlot(BokehPlot, GenericElementPlot):
         else:
             data, mapping, style = self.get_data(element, ranges, style)
 
-        if not self.static_source:
-            self._update_datasource(source, data)
-
         if glyph:
             properties = self._glyph_properties(plot, element, source, ranges, style)
             renderer = self.handles.get('glyph_renderer')
             with abbreviated_exception():
                 self._update_glyph(renderer, properties, mapping, glyph)
+
+        if not self.static_source:
+            self._update_datasource(source, data)
 
 
     def update_frame(self, key, ranges=None, plot=None, element=None):
@@ -1156,7 +1156,7 @@ class ColorbarPlot(ElementPlot):
         colormapper, opts = self._get_cmapper_opts(low, high, factors, nan_colors)
 
         cmapper = self.handles.get(name)
-        if cmapper is not None:
+        if cmapper is not None and type(cmapper) is colormapper:
             if cmapper.palette != palette:
                 cmapper.palette = palette
             opts = {k: opt for k, opt in opts.items()
