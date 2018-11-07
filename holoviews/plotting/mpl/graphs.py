@@ -6,15 +6,23 @@ from matplotlib.collections import LineCollection, PolyCollection
 from ...core.data import Dataset
 from ...core.options import Cycle
 from ...core.util import basestring, unique_array, search_indices, max_range
-from ..util import process_cmap
+from ..util import process_cmap, get_directed_graph_paths
 from .element import ColorbarPlot
 
 
 class GraphPlot(ColorbarPlot):
 
+    arrow_length = param.Number(default=0.025, doc="""
+      If directed option is enabled this determines the length of the
+      arrows as fraction of the overall extent of the graph.""")
+
     color_index = param.ClassSelector(default=None, class_=(basestring, int),
                                   allow_None=True, doc="""
       Index of the dimension from which the color will the drawn""")
+
+    directed = param.Boolean(default=False, doc="""
+      Whether to draw arrows on the graph edges to indicate the
+      directionality of each edge.""")
 
     edge_color_index = param.ClassSelector(default=None, class_=(basestring, int),
                                       allow_None=True, doc="""
@@ -99,7 +107,14 @@ class GraphPlot(ColorbarPlot):
         dims = element.nodes.dimensions()
         self._compute_styles(element, ranges, style)
 
-        paths = element._split_edgepaths.split(datatype='array', dimensions=element.edgepaths.kdims)
+        if self.directed:
+            xdim, ydim = element.nodes.kdims[:2]
+            x_range = ranges[xdim.name]['combined']
+            y_range = ranges[ydim.name]['combined']
+            arrow_len = np.hypot(y_range[1]-y_range[0], x_range[1]-x_range[0])*self.arrow_length
+            paths = get_directed_graph_paths(element, arrow_len)
+        else:
+            paths = element._split_edgepaths.split(datatype='array', dimensions=element.edgepaths.kdims)
         if self.invert_axes:
             paths = [p[:, ::-1] for p in paths]
         return {'nodes': (pxs, pys), 'edges': paths}, style, {'dimensions': dims}

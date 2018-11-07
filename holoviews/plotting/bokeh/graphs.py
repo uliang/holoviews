@@ -12,15 +12,23 @@ from ...core.options import Cycle
 from .chart import ColorbarPlot, PointPlot
 from .element import (CompositeElementPlot, LegendPlot, line_properties,
                       fill_properties, text_properties)
-from ..util import process_cmap
+from ..util import process_cmap, get_directed_graph_paths
 from .util import rgba_tuple
 
 
 class GraphPlot(CompositeElementPlot, ColorbarPlot, LegendPlot):
 
+    arrow_length = param.Number(default=0.025, doc="""
+      If directed option is enabled this determines the length of the
+      arrows as fraction of the overall extent of the graph.""")
+
     color_index = param.ClassSelector(default=None, class_=(basestring, int),
                                       allow_None=True, doc="""
       Index of the dimension from which the color will the drawn""")
+
+    directed = param.Boolean(default=False, doc="""
+      Whether to draw arrows on the graph edges to indicate the
+      directionality of each edge.""")
 
     edge_color_index = param.ClassSelector(default=None, class_=(basestring, int),
                                       allow_None=True, doc="""
@@ -133,7 +141,7 @@ class GraphPlot(CompositeElementPlot, ColorbarPlot, LegendPlot):
         edge_mapping['edge_selection_'+color_type] = transform
 
 
-    def _get_edge_paths(self, element):
+    def _get_edge_paths(self, element, ranges):
         path_data, mapping = {}, {}
         xidx, yidx = (1, 0) if self.invert_axes else (0, 1)
         if element._edgepaths is not None:
@@ -145,6 +153,14 @@ class GraphPlot(CompositeElementPlot, ColorbarPlot, LegendPlot):
             else:
                 raise ValueError("Edge paths do not match the number of supplied edges."
                                  "Expected %d, found %d paths." % (len(element), len(edges)))
+        elif self.directed:
+            xdim, ydim = element.nodes.kdims[:2]
+            x_range = ranges[xdim.name]['combined']
+            y_range = ranges[ydim.name]['combined']
+            arrow_len = np.hypot(y_range[1]-y_range[0], x_range[1]-x_range[0])*self.arrow_length
+            arrows = get_directed_graph_paths(element, arrow_len)
+            path_data['xs'] = [arr[:, 0] for arr in arrows]
+            path_data['ys'] = [arr[:, 1] for arr in arrows]
         return path_data, mapping
 
 
@@ -196,7 +212,7 @@ class GraphPlot(CompositeElementPlot, ColorbarPlot, LegendPlot):
         path_data = dict(start=start, end=end)
         self._get_edge_colors(element, ranges, path_data, edge_mapping, style)
         if not static:
-            pdata, pmapping = self._get_edge_paths(element)
+            pdata, pmapping = self._get_edge_paths(element, ranges)
             path_data.update(pdata)
             edge_mapping.update(pmapping)
 
