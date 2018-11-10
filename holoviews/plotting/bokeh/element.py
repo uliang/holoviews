@@ -653,6 +653,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
 
     def _apply_ops(self, element, source, ranges, style, group=None):
         new_style = dict(style)
+        prefix = group+'_' if group else ''
         for k, v in dict(style).items():
             if isinstance(v, util.basestring):
                 if v in element:
@@ -700,7 +701,7 @@ class ElementPlot(BokehPlot, GenericElementPlot):
             if np.isscalar(val):
                 key = val
             else:
-                key = k
+                key = {'field': k}
                 source.data[k] = val
 
             # If color is not valid colorspec add colormapper
@@ -714,18 +715,19 @@ class ElementPlot(BokehPlot, GenericElementPlot):
                                                 style, name=dname+'_color_mapper', **kwargs)
                 key = {'field': k, 'transform': cmapper}
 
+            new_style[k] = key
+
+        for style, value in list(new_style.items()):
             # If mapped to color/alpha override static fill/line style
             for s in ('alpha', 'color'):
-                if s != k or k not in source.data:
+                if prefix+s != style or style not in source.data:
                     continue
-                fill_style = new_style.get('fill_'+s)
+                fill_style = new_style.get(prefix+'fill_'+s)
                 if fill_style and validate(s, fill_style):
-                    new_style.pop('fill_'+s)
-                line_style = new_style.get('line_'+s)
+                    new_style.pop(prefix+'fill_'+s)
+                line_style = new_style.get(prefix+'line_'+s)
                 if line_style and validate(s, line_style):
-                    new_style.pop('line_'+s)
-
-            new_style[k] = key
+                    new_style.pop(prefix+'line_'+s)
         return new_style
 
 
@@ -1022,6 +1024,7 @@ class CompositeElementPlot(ElementPlot):
             style_group = self._style_groups.get('_'.join(key.split('_')[:-1]))
             properties = self._glyph_properties(plot, element, source, ranges, style, style_group)
             properties = self._process_properties(key, properties, mapping.get(key, {}))
+
             with abbreviated_exception():
                 renderer, glyph = self._init_glyph(plot, mapping.get(key, {}), properties, key)
             self.handles[key+'_glyph'] = glyph
@@ -1299,7 +1302,7 @@ class ColorbarPlot(ElementPlot):
         else:
             colormapper = CategoricalColorMapper
             factors = decode_bytes(factors)
-            opts = dict(factors=factors)
+            opts = dict(factors=list(factors))
             if 'NaN' in colors:
                 opts['nan_color'] = colors['NaN']
         return colormapper, opts
